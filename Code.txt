@@ -1,0 +1,184 @@
+import pygame
+import random
+import time
+
+pygame.init()
+
+# Set up the window
+WINDOW_WIDTH = 800
+WINDOW_HEIGHT = 600
+window = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
+
+# Set up the colors
+BLACK = (0, 0, 0)
+RED = (255, 0, 0)
+BLUE = (0, 0, 255)
+GREEN = (0, 255, 0)
+YELLOW = (255, 255, 0)
+BROWN = (255,238,173)
+AQUA = (30,144,255)
+
+# Set up the stick figures and ball
+stick_figure_positions = [(100, 400), (300, 400), (500, 400), (700, 400)]
+ball_position = (WINDOW_WIDTH//2, 100)
+sun = (WINDOW_WIDTH//2 + 300, 70)
+
+# Set up the transition line
+transition_position = ball_position
+
+# Generate a random target number
+target_number = random.randint(1, 4)
+
+# Create a font object for the target number
+# font = pygame.font.SysFont('Arial', 50)
+font_score = pygame.font.SysFont('Arial', 30)
+
+# Midpoint circle algorithm implementation
+def draw_circle(surface, color, center, radius):
+    x, y = center
+    x0, y0 = radius, 0
+    err = 0
+
+    while x0 >= y0:
+        # Draw octants using circle's symmetrical properties
+        pygame.draw.rect(surface, color, (x + x0, y + y0, 17, 17))
+        pygame.draw.rect(surface, color, (x + y0, y + x0, 17, 17))
+        pygame.draw.rect(surface, color, (x - y0, y + x0, 17, 17))
+        pygame.draw.rect(surface, color, (x - x0, y + y0, 17, 17))
+        pygame.draw.rect(surface, color, (x - x0, y - y0, 17, 17))
+        pygame.draw.rect(surface, color, (x - y0, y - x0, 17, 17))
+        pygame.draw.rect(surface, color, (x + y0, y - x0, 17, 17))
+        pygame.draw.rect(surface, color, (x + x0, y - y0, 17, 17))
+
+        # Update error term and y coordinate
+        if err <= 0:
+            y0 += 1
+            err += 2 * y0 + 1
+        if err > 0:
+            x0 -= 1
+            err -= 2 * x0 + 1
+
+#Midpoint Line Alg
+def draw_line(x1, y1, x2, y2, C, h, w):
+    dx = abs(x2 - x1)
+    dy = abs(y2 - y1)
+    if x1 > x2:
+        sx = -1
+    else:
+        sx = 1
+    if y1 > y2:
+        sy = -1 
+    else:
+        sy = 1
+    check_error = dx - dy
+
+    while True:
+        pygame.draw.rect(window, C, (x1, y1, h, w))
+        if x1 == x2 and y1 == y2:
+            break
+        e2 = 2 * check_error
+        if e2 > -dy:
+            check_error -= dy
+            x1 += sx
+        if e2 < dx:
+            check_error += dx
+            y1 += sy
+
+
+score = 0
+# Main game loop
+key = 0
+run = True
+while run:
+    # Handle events
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            run = False
+
+    # Draw the stick figures and ball
+    window.fill((240,250,255))
+
+    #WATER
+    draw_line(0, 360, 800, 370, AQUA, 200, 300)
+
+    #beach
+    draw_line(0,380, 800, 380, BROWN, 200, 300)
+    for i in range(4):
+        # Stick Figure Body
+        draw_line(stick_figure_positions[i][0], stick_figure_positions[i][1], stick_figure_positions[i][0], stick_figure_positions[i][1]-70, BLACK, 5, 1)
+        #Figure Hands
+        draw_line(stick_figure_positions[i][0], stick_figure_positions[i][1] - 50, stick_figure_positions[i][0]-40, stick_figure_positions[i][1]-70, BLACK, 5, 1)
+        draw_line(stick_figure_positions[i][0], stick_figure_positions[i][1] - 50, stick_figure_positions[i][0]+40, stick_figure_positions[i][1]-70, BLACK, 5, 1)
+
+        #Figure Legs
+        draw_line(stick_figure_positions[i][0], stick_figure_positions[i][1], stick_figure_positions[i][0]-30, stick_figure_positions[i][1]+30, BLACK, 5, 1)
+        draw_line(stick_figure_positions[i][0], stick_figure_positions[i][1], stick_figure_positions[i][0]+30, stick_figure_positions[i][1]+30, BLACK, 5, 1)
+
+        #Head
+        draw_circle(window, RED, (stick_figure_positions[i][0]-5, stick_figure_positions[i][1]-75), 5)
+        font = pygame.font.SysFont('Arial', 20)
+        text = font.render(str(i+1), True, (0, 0, 0))
+        window.blit(text, (stick_figure_positions[i][0], stick_figure_positions[i][1]+55)) #stick figure number
+
+    #ball draw
+    draw_circle(window, BLUE, ball_position, 12) 
+    
+    #sun draw
+    draw_circle(window, YELLOW, sun, 40)
+    draw_circle(window, YELLOW, sun, 25)
+    draw_circle(window, YELLOW, sun, 10)
+
+
+    # Display the target number
+    target_text = font.render(str(target_number), True, BLACK)
+    window.blit(target_text, (WINDOW_WIDTH//2-20, 50))
+    score_text = font_score.render("Score: " + str(score), True, BLACK)
+    window.blit(score_text, (20, 20))
+
+    # Get user input
+    key_pressed = pygame.key.get_pressed()
+    if key_pressed[pygame.K_1]:
+        transition_position = [stick_figure_positions[0][0], stick_figure_positions[0][1]-70]
+        key = 1
+
+    elif key_pressed[pygame.K_2]:
+        transition_position = [stick_figure_positions[1][0], stick_figure_positions[1][1]-70]
+        key = 2
+
+    elif key_pressed[pygame.K_3]:
+        transition_position = [stick_figure_positions[2][0], stick_figure_positions[2][1]-70]
+        key = 3
+
+    elif key_pressed[pygame.K_4]:
+        transition_position = [stick_figure_positions[3][0], stick_figure_positions[3][1]-70]
+        key = 4
+
+    # Update the ball position
+    if target_number == key:
+        if ball_position != transition_position:
+            if (transition_position[0]-ball_position[0]) < 0.1 and (transition_position[1]-ball_position[1]) < 0.1:
+                ball_position = transition_position
+            else:
+                x = ball_position[0] + (transition_position[0] - ball_position[0]) / 5
+                y = ball_position[1] + (transition_position[1] - ball_position[1]) / 5
+                ball_position = [x, y]
+            time.sleep(0.001)  # add a delay between each frame update
+
+
+        elif ball_position == transition_position:
+            ball_position = (WINDOW_WIDTH//2, 100)
+            target_number = random.randint(1, 4)
+            score += 1
+            key = 0
+
+    elif key != 0 and target_number != key:
+        font_size = 120
+        G_O_F = pygame.font.Font(None, font_size)
+        G_O = G_O_F.render("Game Over", True, BLACK)
+        window.blit(G_O, (WINDOW_WIDTH / 2 - 250, WINDOW_HEIGHT / 2 - 100))
+        pygame.display.update()
+        time.sleep(3)
+        run = False
+
+    # Update the display
+    pygame.display.update()
